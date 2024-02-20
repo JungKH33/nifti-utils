@@ -42,31 +42,42 @@ def merge_labels(input_data: np.ndarray, labels: list, target_label: tuple = (1,
 
     return merged_labels
 
-def get_borders(input_data: np.ndarray, labels: list, thickness: int = 1) -> np.ndarray:
-    """Extract the borders of a specified label in an image.
+
+def get_borders(input_data: np.ndarray, labels: list, target_label: int or float = 1,
+                thickness: int = 1) -> np.ndarray:
+    """Extract the borders of specified labels in an image and turn them into a target label.
 
     Parameters:
         input_data (np.ndarray): The input image data array.
-        labels (list): The list of labels to be merged.
-        thickness (int): The thickness of the borders to be extracted. Default is 3.
+        labels (list): List of labels for which borders are to be extracted.
+        target_label (int or float): The label to assign to the extracted borders.
+        thickness (int): The thickness of the borders to be extracted. Default is 1.
 
     Returns:
-        np.ndarray: The binary mask containing the extracted borders.
+        np.ndarray: The image with the extracted borders assigned the target label.
     """
-    # Initialize an empty mask for the specified labels
-    mask_labels = np.zeros_like(input_data, dtype=bool)
 
-    # Create a mask for each specified label and combine them
+    # Initialize an empty array to store the borders
+    borders_combined = np.zeros_like(input_data)
+
+    # Find and combine borders for each specified label
     for label in labels:
-        mask_labels |= (input_data == label)
+        # Create a mask where specified label is True and all others are False
+        mask_specified = (input_data == label)
 
-    # Find the borders between the specified labels and other labels
-    borders = find_boundaries(mask_labels, connectivity=1, mode='inner')
+        # Find the borders between the specified label and other labels
+        borders = find_boundaries(mask_specified, connectivity=1, mode='inner')
 
-    # Dilate the borders to increase thickness
-    borders = binary_dilation(borders, iterations=thickness)
+        # Dilate the borders to increase thickness
+        borders = binary_dilation(borders, iterations=thickness)
 
-    return borders
+        # Add the borders to the combined array
+        borders_combined = np.logical_or(borders_combined, borders)
+
+    # Assign the target label to the extracted borders
+    borders_combined = np.where(borders_combined, target_label, input_data)
+
+    return borders_combined
 def add_padding(input_data: np.ndarray, labels: list, padding_size: int = 1) -> np.ndarray:
     """Add padding to specified labels in an image.
 

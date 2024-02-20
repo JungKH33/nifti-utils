@@ -9,7 +9,7 @@ if __name__ == "__main__":
     # merge_mask(input_nii_file, output_nii_file)
     img, data = load_nii(input_nii_file)
 
-    type = 1
+    type = 3
     if type == 1:
         data = merge_labels(data, labels=[3, 8, 42, 47], target_label=(1, 0))
         data = add_padding(data, labels= [1], padding_size = 1)
@@ -17,7 +17,10 @@ if __name__ == "__main__":
     elif type == 2:
         data = merge_labels(data, labels=[3, 8, 42, 47], target_label=(1, 0))
         data = get_borders(data, labels = [1])
-        data = add_padding(data, labels= [1])
+        data = add_padding(data, labels = [1])
+
+    elif type == 3:
+        data = get_borders(data, labels =[3, 8, 42, 47], target_label= 1)
 
     else:
         data = get_borders(data, labels=[24, 3, 8, 42, 47])
