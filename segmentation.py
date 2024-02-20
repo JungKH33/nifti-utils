@@ -1,37 +1,6 @@
-
 import numpy as np
-import nibabel as nib
 from skimage.segmentation import find_boundaries
 from scipy.ndimage import binary_dilation
-
-def load_nii(file_path: str) -> np.ndarray:
-    """Load a NIfTI file and return the image data array.
-
-    Parameters:
-        file_path (str): The file path to the NIfTI file.
-
-    Returns:
-        np.ndarray: The image data array.
-    """
-    # Load the NIfTI file
-    img = nib.load(file_path)
-    data = img.get_fdata()
-    return img, data
-def save_nii(save_path: str, input_data: np.ndarray, img_affine: np.ndarray = None) -> None:
-    """Save an image data array as a NIfTI file.
-
-    Parameters:
-        save_path (str): The file path to save the NIfTI file.
-        input_data (np.ndarray): The image data array.
-        img_affine (np.ndarray): The affine transformation matrix.
-    """
-
-    if input_data.dtype == np.bool_:
-        input_data = input_data.astype(np.uint8)
-
-        # Save the NIfTI file
-    nii_img = nib.Nifti1Image(input_data, img_affine, None)
-    nib.save(nii_img, save_path)
 
 def find_labels(input_data: np.ndarray) -> list:
     """Find all unique labels present in a mask.
@@ -119,47 +88,3 @@ def add_padding(input_data: np.ndarray, labels: list, padding_size: int = 1) -> 
         padded_img[padded_label_mask] = label
 
     return padded_img
-
-
-
-if __name__ == "__main__":
-    input_nii_file = r"C:\projects\NeurophetSegBaseEngine\data\mask\irb82_0001_20230721_swi_synthseg.nii.gz"
-    input_nii_file = r"C:\projects\SynthSeg-master\output\irb82_0001_20230721_swi_synthseg.nii.gz"
-    input_nii_file = r"C:\projects\SynthSeg-master\output\irb82_0002_20230720_swi_mag_synthseg.nii.gz"
-    output_nii_file = r'C:\projects\NeurophetSegBaseEngine\jung\test.nii'
-    # merge_mask(input_nii_file, output_nii_file)
-    img, data = load_nii(input_nii_file)
-
-    type = 1
-    if type == 1:
-        data = merge_labels(data, labels=[3, 8, 42, 47], target_label=(1, 0))
-        data = add_padding(data, labels= [1], padding_size = 1)
-
-
-    elif type == 2:
-        data = merge_labels(data, labels=[3, 8, 42, 47], target_label=(1, 0))
-        data = get_borders(data, labels = [1])
-        data = add_padding(data, labels= [1])
-
-    else:
-        data = get_borders(data, labels=[24, 3, 8, 42, 47])
-        data = add_padding(data, labels=[1])
-
-
-    save_nii(output_nii_file, data, img.affine)
-
-
-    input_directory = r"C:\database\dataset\mask_irb83"
-    output_directory = r'C:\projects\NeurophetSegBaseEngine\jung\temp'
-
-    import sys
-    sys.exit()
-
-    for filename in os.listdir(input_directory):
-        if filename.endswith(".nii.gz") or filename.endswith(".nii"):
-            # Construct full paths
-            input_file_path = os.path.join(input_directory, filename)
-            output_file_path = os.path.join(output_directory, filename)
-
-            # Merge and save mask
-            merge_mask(input_file_path, output_file_path)
