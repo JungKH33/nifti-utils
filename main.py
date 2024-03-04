@@ -1,50 +1,78 @@
 from data import *
 from segmentation import *
+from augmentation import *
 import os
 
-if __name__ == "__main__":
-    input_nii_file = r"C:\projects\NeurophetSegBaseEngine\data\mask\irb82_0001_20230721_swi_synthseg.nii.gz"
-    input_nii_file = r"C:\projects\SynthSeg-master\output\irb82_0001_20230721_swi_synthseg.nii.gz"
-    input_nii_file = r"C:\database\dataset\mask_robust\irb82_0002_20230720_swi_mag_synthseg.nii.gz"
-    output_nii_file = r'C:\projects\NeurophetSegBaseEngine\jung\test.nii'
+def new_mask(input_nii_file, output_nii_file, type = 1):
+    img = load_nii(input_nii_file)
+    data = nifti_to_numpy(img)
 
-    # merge_mask(input_nii_file, output_nii_file)
-    img, data = load_nii(input_nii_file)
-
-    type = 1
+    type = type
+    specific_labels = [3, 8, 42, 47]
     if type == 1:
-        data = merge_labels(data, labels=[3, 8, 42, 47], target_label=(1, 0))
-        data = add_padding(data, labels= [1], padding_size = 1)
+        data = merge_labels(data, labels=specific_labels, target_label=(1, 0))
+        data = add_padding(data, labels=[1], padding_size=2)
 
     elif type == 2:
-        data = merge_labels(data, labels=[3, 8, 42, 47], target_label=(1, 0))
-        data = get_borders(data, labels = [1])
-        data = add_padding(data, labels = [1])
+        data = merge_labels(data, labels=specific_labels, target_label=(1, 0))
+        data = get_borders(data, labels=[1])
+        data = add_padding(data, labels=[1])
 
     elif type == 3:
-        data = get_borders(data, labels = [3, 8, 42, 47], target_label= 1)
+        data = get_borders(data, labels=specific_labels, target_label=1)
 
     else:
-        data = get_borders(data, labels=[24, 3, 8, 42, 47])
+        data = get_borders(data, labels=specific_labels)
         data = add_padding(data, labels=[1])
 
     save_nii(output_nii_file, data, img.affine)
 
+def reorient_datas(input_file_path, output_file_path):
+    img = load_nii(input_file_path)
+    info = extract_nifti_info(img)
 
-    import sys
-    #sys.exit()
+    img3 = reorient(img)
+    info3 = extract_nifti_info(img3)
 
-    input_directory = r"C:\database\dataset\mask_robust"
-    output_directory = r'C:\projects\NeurophetSegBaseEngine\jung\temp'
+    print(filename)
+    print("Orientation of input: ", info['orientation'])
+    print("Change of Orientation: ", info3['orientation'])
+    print()
+
+    nib.save(img3, output_file_path)
+
+######################
+input_nii_file = r"C:\projects\NeurophetSegBaseEngine\data\mask\irb82_0001_20230721_swi_synthseg.nii.gz"
+input_nii_file = r"C:\projects\SynthSeg-master\output\irb82_0001_20230721_swi_synthseg.nii.gz"
+input_nii_file = r"C:\database\dataset\seg10\mask_robust\irb82_0002_20230720_swi_mag_synthseg.nii.gz"
+input_nii_file = r"C:\database\dataset\seg10\mask_robust\irb82_0041_20220920_swi_mag_synthseg.nii.gz"
+
+output_nii_file = './test.nii'
+
+
+input_directory = r"C:\database\dataset\seg10\mask_robust"
+input_directory = r"C:\database\dataset\seg10\input"
+resampled_input_directory = r"C:\database\dataset\seg10\input_resampled"
+
+output_directory = r'C:\projects\NeurophetSegBaseEngine\jung\temp'
+
+if __name__ == "__main__":
+
+    # new_mask(input_nii_file, output_nii_file, type = 1)
+    #input_directory = r'C:\database\dataset\seg10\ss_input'
+    #segment_directory = r'C:\database\dataset\seg10\ss_mask'
+    #save_directory = r'C:\database\dataset\seg10\ss_input_reorient'
+
+    input
 
     for filename in os.listdir(input_directory):
         if filename.endswith(".nii.gz") or filename.endswith(".nii"):
             # Construct full paths
             input_file_path = os.path.join(input_directory, filename)
-            output_file_path = os.path.join(output_directory, filename)
 
-            # Merge and save mask
-            img, data = load_nii(input_file_path)
-            data = merge_labels(data, labels=[3, 8, 42, 47], target_label=(1, 0))
-            data = add_padding(data, labels=[1], padding_size=1)
-            save_nii(output_file_path, data, img.affine)
+            output_file_path = os.path.join(save_directory, filename)
+
+
+
+
+
