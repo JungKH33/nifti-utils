@@ -65,9 +65,27 @@ if __name__ == "__main__":
     #segment_directory = r'C:\database\dataset\seg10\ss_mask'
     #save_directory = r'C:\database\dataset\seg10\ss_input_reorient'
 
+    input_file = r"C:\database\dataset\seg10\input\irb82_0001_20230721_swi.nii.gz"
+    resampled_file = r"C:\database\dataset\seg10\input_resampled\irb82_0001_20230721_swi.nii.gz"
+
+    img = load_nii(input_file)
+    resampled_img = load_nii(resampled_file)
+
+    img_info = extract_nifti_info(img)
+    resampled_img_info = extract_nifti_info(resampled_img)
+
+    new_img = resize(resampled_img, img_info['shape'])
+    new_img_info = extract_nifti_info(new_img)
+    print("Original shape : ", resampled_img_info['shape'])
+    print("Target shape : ", img_info['shape'])
+    print("Changed shape : ", new_img_info['shape'])
+
+
+
     input_directory = r'C:\database\dataset\seg10\ss_mask'
     save_directory = r'C:\database\dataset\seg10\ss_mask_new'
-
+    import sys
+    sys.exit()
     for filename in os.listdir(input_directory):
         if filename.endswith(".nii.gz") or filename.endswith(".nii"):
             # Construct full paths

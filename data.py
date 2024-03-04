@@ -53,7 +53,7 @@ def extract_nifti_info(input_img: Nifti1Image) -> dict:
         dict: A dictionary containing:
             - 'header' (nibabel.nifti1.Nifti1Header): The header of the NIfTI image.
             - 'data_type' (numpy.dtype): The data type of the NIfTI image.
-            - 'dimension' (tuple): The dimensions of the NIfTI image.
+            - 'shape' (tuple): The dimensions of the NIfTI image.
             - 'unique_values' (numpy.ndarray): The unique values in the NIfTI image data.
             - 'orientation' (str): The orientation information of the NIfTI image.
     """
@@ -66,8 +66,8 @@ def extract_nifti_info(input_img: Nifti1Image) -> dict:
     # Extract data type
     nii_info['data_type'] = input_img.get_data_dtype()
 
-    # Extract dimension
-    nii_info['dimension'] = input_img.shape
+    # Extract shape
+    nii_info['shape'] = input_img.shape
 
     # Extract unique values
     nii_info['unique_values'] = np.unique(input_img.get_fdata())
