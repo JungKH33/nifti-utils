@@ -2,3 +2,4 @@ numpy
 nibabel
 scikit-image
 scipy
+torchio

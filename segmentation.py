@@ -18,31 +18,29 @@ def find_labels(input_data: np.ndarray) -> list:
     label_list = list(unique_labels)
 
     return label_list
-def merge_labels(input_data: np.ndarray, labels: list, target_label: tuple = (1, 0)) -> np.ndarray:
-    """Merge specified labels in the input data array to target labels.
+def change_labels(input_data: np.ndarray, labels: list, target_label: tuple = (1, 0)) -> np.ndarray:
+    """Change specified labels in the input data array to target labels.
 
     Parameters:
         input_data (np.ndarray): The input data array.
-        labels (list): The list of labels to be merged.
+        labels (list): The list of labels to be changed.
         target_label (tuple): A tuple specifying the target labels.
-            If target_label[1] is None, labels will be merged to target_label[0].
-            If target_label[1] is not None, labels present in input_data will be merged to target_label[0],
-            while labels not present in input_data will be merged to target_label[1].
+            If target_label[1] is None, labels will be changed to target_label[0].
+            If target_label[1] is not None, labels present in input_data will be changed to target_label[0],
+            while labels not present in input_data will be changed to target_label[1].
             Default is (1, None).
 
     Returns:
-        np.ndarray: The merged labels array.
+        np.ndarray: The changed labels array.
     """
 
     if target_label[1] is None:
         # Set the mask values to 1 for specific labels
-        merged_labels = np.where(np.isin(input_data, labels), target_label[0], input_data)
+        changed_labels = np.where(np.isin(input_data, labels), target_label[0], input_data)
     else:
-        merged_labels = np.where(np.isin(input_data, labels), target_label[0], target_label[1])
+        changed_labels = np.where(np.isin(input_data, labels), target_label[0], target_label[1])
 
-    return merged_labels
-
-
+    return changed_labels
 def get_borders(input_data: np.ndarray, labels: list, target_label: int or float = 1,
                 thickness: int = 1) -> np.ndarray:
     """Extract the borders of specified labels in an image and turn them into a target label.

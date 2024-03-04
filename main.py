@@ -1,3 +1,5 @@
+import numpy
+
 from data import *
 from segmentation import *
 from augmentation import *
@@ -10,11 +12,11 @@ def new_mask(input_nii_file, output_nii_file, type = 1):
     type = type
     specific_labels = [3, 8, 42, 47]
     if type == 1:
-        data = merge_labels(data, labels=specific_labels, target_label=(1, 0))
+        data = change_labels(data, labels=specific_labels, target_label=(1, 0))
         data = add_padding(data, labels=[1], padding_size=2)
 
     elif type == 2:
-        data = merge_labels(data, labels=specific_labels, target_label=(1, 0))
+        data = change_labels(data, labels=specific_labels, target_label=(1, 0))
         data = get_borders(data, labels=[1])
         data = add_padding(data, labels=[1])
 
@@ -63,14 +65,19 @@ if __name__ == "__main__":
     #segment_directory = r'C:\database\dataset\seg10\ss_mask'
     #save_directory = r'C:\database\dataset\seg10\ss_input_reorient'
 
-    input
+    input_directory = r'C:\database\dataset\seg10\ss_mask'
+    save_directory = r'C:\database\dataset\seg10\ss_mask_new'
 
     for filename in os.listdir(input_directory):
         if filename.endswith(".nii.gz") or filename.endswith(".nii"):
             # Construct full paths
             input_file_path = os.path.join(input_directory, filename)
+            img = load_nii(input_file_path)
+            data = nifti_to_numpy(img)
+            data = change_labels(data, [1], (1,0))
 
             output_file_path = os.path.join(save_directory, filename)
+            save_nii(output_file_path, data, img.affine)
 
 
 
