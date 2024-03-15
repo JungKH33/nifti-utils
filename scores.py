@@ -1,7 +1,28 @@
 import numpy as np
 from scipy.spatial.distance import cdist
 
-def dice_score(data1, data2):
+def dice_score(data1: np.ndarray, data2: np.ndarray) -> float:
+    """
+    Calculate the Dice coefficient between two binary arrays.
+
+    The Dice coefficient is a similarity measure commonly used in image segmentation tasks.
+
+    Args:
+        data1 (np.ndarray): The first binary array.
+        data2 (np.ndarray): The second binary array.
+
+    Returns:
+        float: The Dice coefficient between the two binary arrays.
+
+    Raises:
+        ValueError: If the shapes of the input arrays are not equal.
+
+    Example:
+        >>> data1 = np.array([[0, 0, 1, 1, 0]])
+        >>> data2 = np.array([[0, 1, 1, 0, 0]])
+        >>> dice_score(data1, data2)
+        0.6666666666666666
+    """
     if not np.array_equal(data1.shape, data2.shape):
         raise ValueError("The shapes of two arrays must be equal. data1 shape: {}, data2 shape: {}".format(data1.shape, data2.shape))
 
@@ -9,10 +30,39 @@ def dice_score(data1, data2):
     dice = (2.0 * intersection) / (np.sum(data1) + np.sum(data2))
     return dice
 
-def assd_score(data1, data2):
+def assd_score(data1: np.ndarray, data2: np.ndarray) -> float:
+    """
+    Calculate the Average Symmetric Surface Distance (ASSD) between two binary arrays.
+
+    The ASSD measures the average distance between corresponding points on the surfaces
+    represented by the binary arrays.
+
+    Args:
+        data1 (np.ndarray): The first binary array representing a surface.
+        data2 (np.ndarray): The second binary array representing a surface.
+
+    Returns:
+        float: The Average Symmetric Surface Distance between the two surfaces.
+
+    Raises:
+        ValueError: If the shapes of the input arrays are not equal.
+
+    Example:
+        >>> data1 = np.array([[0, 0, 0, 0, 0],
+        ...                    [0, 1, 1, 1, 0],
+        ...                    [0, 1, 0, 1, 0],
+        ...                    [0, 1, 1, 1, 0],
+        ...                    [0, 0, 0, 0, 0]])
+        >>> data2 = np.array([[0, 0, 0, 0, 0],
+        ...                    [0, 0, 1, 0, 0],
+        ...                    [0, 1, 1, 1, 0],
+        ...                    [0, 0, 1, 0, 0],
+        ...                    [0, 0, 0, 0, 0]])
+        >>> assd_score(data1, data2)
+        1.5
+    """
     if not np.array_equal(data1.shape, data2.shape):
-        raise ValueError(
-            "The shapes of two arrays must be equal. data1 shape: {}, data2 shape: {}".format(data1.shape, data2.shape))
+        raise ValueError("The shapes of two arrays must be equal. data1 shape: {}, data2 shape: {}".format(data1.shape, data2.shape))
 
     # Convert binary arrays to sets of coordinates
     coordinates1 = np.array(np.where(data1)).T
