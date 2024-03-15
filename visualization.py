@@ -1,6 +1,7 @@
 from nilearn import plotting
 import nibabel as nib
 import matplotlib.pyplot as plt
+import numpy as np
 
 def plot_image(input_image: nib.Nifti1Image, display_mode: str = 'ortho', cmap: str = 'gray') -> None:
     """
@@ -17,7 +18,6 @@ def plot_image(input_image: nib.Nifti1Image, display_mode: str = 'ortho', cmap: 
     plotting.plot_anat(input_image, display_mode=display_mode, cmap=cmap)
     plt.show()
 
-
 def plot_image_with_mask(input_image: nib.Nifti1Image, mask_image: nib.Nifti1Image, display_mode: str = 'ortho', cmap: str = 'gray') -> None:
     """
     Display a NIfTI image with an overlay mask using Nilearn's plotting capabilities.
@@ -33,3 +33,4 @@ def plot_image_with_mask(input_image: nib.Nifti1Image, mask_image: nib.Nifti1Ima
     """
     plotting.plot_roi(roi_img=mask_image, bg_img=input_image, display_mode=display_mode, cmap=cmap, alpha=0.5)
     plt.show()
+

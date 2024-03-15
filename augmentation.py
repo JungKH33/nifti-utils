@@ -28,6 +28,7 @@ def reorient(input_img: Nifti1Image, target_orientation: str| tuple[str, str, st
     transformed_image = input_img.as_reoriented(transform)
 
     return transformed_image
+
 def resize(input_img: Nifti1Image, target_shape: int | tuple[int, int, int]) -> Nifti1Image:
     """
     Resize the input image to the target shape.
@@ -41,6 +42,7 @@ def resize(input_img: Nifti1Image, target_shape: int | tuple[int, int, int]) -> 
     """
     transformed_image = tio.Resize(target_shape)(input_img)
     return transformed_image
+
 def resample_iso(input_img: Nifti1Image, target_iso: float | tuple[float, float, float]) -> Nifti1Image:
     """
     Resample the input image to the target isotropic resolution.

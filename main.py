@@ -4,6 +4,7 @@ from data import *
 from segmentation import *
 from augmentation import *
 from visualization import *
+import experimental
 import os
 
 
@@ -84,10 +85,10 @@ if __name__ == "__main__":
     mask_img = load_nii(mask_file)
     mask_data = nifti_to_numpy(mask_img)
     # clustered_data = cluster_labels(mask_data, num_clusters= 4)
-    clustered_data = get_connected_components(mask_data)
+    clustered_data, num_objects = get_connected_components(mask_data)
     bounding_box = create_bounding_box(clustered_data)
-    print(bounding_box)
-    # save_nii('test.nii', clustered_data)
+    mask_with_bounding_box = experimental.draw_bounding_boxes(clustered_data,bounding_box)
+    save_nii('test.nii', mask_with_bounding_box)
     # plot_image_with_mask(img, clustered_img)
 
     import sys

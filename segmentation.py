@@ -1,3 +1,4 @@
+from typing import Tuple
 import numpy as np
 from skimage.segmentation import find_boundaries
 from scipy.ndimage import binary_dilation, measurements
@@ -19,6 +20,7 @@ def find_labels(input_data: np.ndarray) -> list:
     label_list = list(unique_labels)
 
     return label_list
+
 def change_labels(input_data: np.ndarray, labels: list, target_label: tuple = (1, 0)) -> np.ndarray:
     """Change specified labels in the input data array to target labels.
 
@@ -42,6 +44,7 @@ def change_labels(input_data: np.ndarray, labels: list, target_label: tuple = (1
         changed_labels = np.where(np.isin(input_data, labels), target_label[0], target_label[1])
 
     return changed_labels
+
 def get_borders(input_data: np.ndarray, labels: list, target_label: int or float = 1,
                 thickness: int = 1) -> np.ndarray:
     """Extract the borders of specified labels in an image and turn them into a target label.
@@ -77,6 +80,7 @@ def get_borders(input_data: np.ndarray, labels: list, target_label: int or float
     borders_combined = np.where(borders_combined, target_label, input_data)
 
     return borders_combined
+
 def add_padding(input_data: np.ndarray, labels: list, padding_size: int = 1) -> np.ndarray:
     """Add padding to specified labels in an image.
 
@@ -98,6 +102,7 @@ def add_padding(input_data: np.ndarray, labels: list, padding_size: int = 1) -> 
         padded_img[padded_label_mask] = label
 
     return padded_img
+
 def cluster_labels(input_data: np.ndarray, num_clusters: int = None) -> np.ndarray:
     """
     Cluster labels in the input data.
@@ -131,7 +136,8 @@ def cluster_labels(input_data: np.ndarray, num_clusters: int = None) -> np.ndarr
         clustered_mask[x, y, z] = clusters[i] + 1
 
     return clustered_mask
-def get_connected_components(input_data: np.ndarray) -> np.ndarray:
+
+def get_connected_components(input_data: np.ndarray) -> Tuple[np.ndarray, int]:
     """
     Get connected components in the input data.
 
@@ -139,13 +145,15 @@ def get_connected_components(input_data: np.ndarray) -> np.ndarray:
     input_data (np.ndarray): The input data containing regions.
 
     Returns:
-    np.ndarray: A mask where each connected component is labeled with a unique integer.
+    Tuple[np.ndarray, int]: A tuple containing a mask where each connected component is labeled with a unique integer,
+    and the number of objects found.
     """
     # Find connected components in the input data
     connected_component_mask, num_objects = measurements.label(input_data)
 
-    return connected_component_mask
-def create_bounding_box(input_data: np.ndarray) -> list:
+    return connected_component_mask, num_objects
+
+def create_bounding_box(input_data: np.ndarray) -> dict:
     """
     Create bounding boxes for each label in the input data.
 
@@ -153,10 +161,10 @@ def create_bounding_box(input_data: np.ndarray) -> list:
     input_data (np.ndarray): The input data containing labeled regions.
 
     Returns:
-    list: A list of bounding boxes, where each bounding box is represented
-          as a tuple of two 3D coordinates: ((min_x, min_y, min_z), (max_x, max_y, max_z)).
+    dict: A dictionary where keys are labels and values are bounding boxes,
+          each bounding box is represented as a tuple of two 3D coordinates: ((min_x, min_y, min_z), (max_x, max_y, max_z)).
     """
-    bounding_boxes = []
+    bounding_boxes = {}
 
     # Find unique labels in the input data
     unique_labels = np.unique(input_data)
@@ -173,7 +181,7 @@ def create_bounding_box(input_data: np.ndarray) -> list:
         min_x, min_y, min_z = np.min(coords, axis=0)
         max_x, max_y, max_z = np.max(coords, axis=0)
 
-        # Store the bounding box coordinates
-        bounding_boxes.append(((min_x, min_y, min_z), (max_x, max_y, max_z)))
+        # Store the bounding box coordinates in the dictionary
+        bounding_boxes[label] = ((min_x, min_y, min_z), (max_x, max_y, max_z))
 
     return bounding_boxes

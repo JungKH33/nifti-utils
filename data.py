@@ -14,6 +14,7 @@ def load_nii(file_path: str) -> Nifti1Image:
     # Load the NIfTI file
     img = nib.load(file_path)
     return img
+
 def save_nii(save_path: str, input_data: np.ndarray, img_affine: np.ndarray = None) -> None:
     """Save an image data array as a NIfTI file.
 
@@ -29,6 +30,7 @@ def save_nii(save_path: str, input_data: np.ndarray, img_affine: np.ndarray = No
         # Save the NIfTI file
     nii_img = nib.Nifti1Image(input_data, img_affine, None)
     nib.save(nii_img, save_path)
+
 def nifti_to_numpy(input_img: Nifti1Image) -> np.ndarray:
     """
     Convert a NIfTI image object to a NumPy array.
@@ -42,6 +44,7 @@ def nifti_to_numpy(input_img: Nifti1Image) -> np.ndarray:
     # Extract image data array
     data = input_img.get_fdata()
     return data
+
 def extract_nifti_info(input_img: Nifti1Image) -> dict:
     """
     Extract header information, data type, dimension, unique values, and orientation from a NIfTI image object.
