@@ -78,8 +78,8 @@ output_directory = r'C:\projects\NeurophetSegBaseEngine\jung\temp'
 
 if __name__ == "__main__":
 
-    input_file = r"E:\dataset\seg10\ss_input_reorient\irb82_0037.nii.gz"
-    mask_file = r"E:\dataset\seg10\ss_mask_new\irb82_0037.nii.gz"
+    input_file = r"E:\dataset\seg10\ss_input_reorient\irb82_0048.nii.gz"
+    mask_file = r"E:\dataset\seg10\ss_mask_new\irb82_0048.nii.gz"
 
     img = load_nii(input_file)
     mask_img = load_nii(mask_file)
