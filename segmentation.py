@@ -1,8 +1,12 @@
-from typing import Tuple
+import os
+from typing import Optional, Tuple
 import numpy as np
 from skimage.segmentation import find_boundaries
-from scipy.ndimage import binary_dilation, measurements
+from skimage.measure import label, regionprops
 from sklearn.cluster import DBSCAN, KMeans
+
+from scipy.ndimage import binary_dilation, measurements
+
 
 def find_labels(input_data: np.ndarray) -> list:
     """Find all unique labels present in a mask.
@@ -120,7 +124,7 @@ def cluster_labels(input_data: np.ndarray, num_clusters: int = None) -> np.ndarr
 
     if num_clusters is None:
         # Use DBSCAN for clustering
-        dbscan = DBSCAN(eps=1, min_samples=10)
+        dbscan = DBSCAN(eps= 1, min_samples= 1)
         clusters = dbscan.fit_predict(coords)
     else:
         # Use KMeans for clustering
@@ -137,23 +141,25 @@ def cluster_labels(input_data: np.ndarray, num_clusters: int = None) -> np.ndarr
 
     return clustered_mask
 
-def get_connected_components(input_data: np.ndarray) -> Tuple[np.ndarray, int]:
+def get_connected_components(input_data: np.ndarray, connectivity: Optional[int] = None) -> Tuple[np.ndarray, int]:
     """
     Get connected components in the input data.
 
     Parameters:
     input_data (np.ndarray): The input data containing regions.
+    connectivity (Optional[int]): Maximum number of orthogonal hops to consider a pixel/voxel as a neighbor.
+        Accepted values are ranging from 1 to input.ndim. If None, a full connectivity of input.ndim is used.
 
     Returns:
     Tuple[np.ndarray, int]: A tuple containing a mask where each connected component is labeled with a unique integer,
     and the number of objects found.
     """
     # Find connected components in the input data
-    connected_component_mask, num_objects = measurements.label(input_data)
+    connected_component_mask, num_objects = label(input_data, return_num= True, connectivity= connectivity)
 
     return connected_component_mask, num_objects
 
-def create_bounding_box(input_data: np.ndarray) -> dict:
+def get_bbox(input_data: np.ndarray) -> dict:
     """
     Create bounding boxes for each label in the input data.
 
@@ -185,3 +191,38 @@ def create_bounding_box(input_data: np.ndarray) -> dict:
         bounding_boxes[label] = ((min_x, min_y, min_z), (max_x, max_y, max_z))
 
     return bounding_boxes
+
+def get_regions(input_data: np.ndarray) -> dict:
+    region_dict = {}
+    regions = regionprops(input_data)
+    for region in regions:
+        region_dict[region.label] = {}
+        region_dict[region.label]['area'] = region.area
+        region_dict[region.label]['bbox_area'] = region.bbox_area
+        region_dict[region.label]['bbox'] = region.bbox
+
+    return region_dict
+
+if __name__ == "__main__":
+    from data import *
+    import experimental
+
+    input_dir = r"E:\dataset\seg10\ss_input_reorient"
+    mask_dir = r"E:\dataset\seg10\ss_mask_new"
+    save_dir = r"C:\github\nii-utils\src"
+
+    for filename in os.listdir(input_dir):
+
+        input_path = os.path.join(input_dir, filename)
+        mask_path = os.path.join(mask_dir, filename)
+        save_path = os.path.join(save_dir, filename)
+
+        img = load_nii(input_path)
+        mask_img = load_nii(mask_path)
+        mask_data = nifti_to_numpy(mask_img)
+        # clustered_data = cluster_labels(mask_data)
+        clustered_data, num_objects = get_connected_components(mask_data, connectivity= 1)
+        bounding_box = get_bbox(clustered_data)
+        # regions = get_regions(clustered_data)
+        # clustered_data = experimental.draw_bounding_boxes(clustered_data,bounding_box)
+        save_nii(save_path, clustered_data)

@@ -27,6 +27,13 @@ def save_nii(save_path: str, input_data: np.ndarray, img_affine: np.ndarray = No
     if input_data.dtype == np.bool_:
         input_data = input_data.astype(np.uint8)
 
+    elif input_data.dtype == np.int64:
+        input_data = input_data.astype(np.int16)
+
+    elif input_data.dtype == np.float64:
+        input_data = input_data.astype(np.float32)
+
+
         # Save the NIfTI file
     nii_img = nib.Nifti1Image(input_data, img_affine, None)
     nib.save(nii_img, save_path)
@@ -77,6 +84,7 @@ def extract_nifti_info(input_img: Nifti1Image) -> dict:
 
     # Extract orientation
     affine = input_img.affine
+    nii_info['direction'] = affine[:3, :3]
     nii_info['orientation'] = nib.aff2axcodes(affine)
 
     return nii_info

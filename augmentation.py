@@ -56,3 +56,25 @@ def resample_iso(input_img: Nifti1Image, target_iso: float | tuple[float, float,
     """
     transformed_image = tio.Resize(target_iso)(input_img)
     return transformed_image
+
+if __name__ == '__main__':
+    from data import *
+    import os
+    os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
+
+    data_dir = r"E:\dataset\seg10\mask_robust_merged"
+    target_dir = r'E:\dataset\seg10\input'
+    save_dir = r"E:\dataset\seg10\mask_robust_merged_reorient"
+    for filename in os.listdir(data_dir):
+        print(filename)
+        data_path = os.path.join(data_dir, filename)
+        target_path = os.path.join(target_dir, filename)
+        save_path = os.path.join(save_dir, filename)
+
+        image = load_nii(data_path)
+        target_image = load_nii(target_path)
+        resized_image = resize(image, target_image.shape)
+
+        print(image.shape, target_image.shape, resized_image.shape)
+
+        nib.save(resized_image, save_path)

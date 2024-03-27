@@ -1,7 +1,7 @@
+torchio
 numpy
 nibabel
 scikit-image
 scipy
-torchio
 matplotlib
 nilearn

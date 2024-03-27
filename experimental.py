@@ -1,5 +1,4 @@
 import numpy as np
-import cv2
 import matplotlib.pyplot as plt
 
 
@@ -61,4 +60,62 @@ def plot_bounding_box(image, mask_image, num_objects):
 
     plt.show()
 
-    pass
+def intersection_score(data1: np.ndarray, data2: np.ndarray, labels=None) -> dict:
+
+    if not np.array_equal(data1.shape, data2.shape):
+        raise ValueError(
+            "The shapes of two arrays must be equal. data1 shape: {}, data2 shape: {}".format(data1.shape,
+                                                                                              data2.shape))
+
+    if labels is None:
+        labels = np.unique(np.concatenate((data1, data2)))
+
+    dice_scores = {}
+
+    label = 1
+    truth_label = data1 == label
+    pred_label = data2 == label
+    intersection = np.sum(truth_label * pred_label)
+    dice = intersection / np.sum(truth_label)
+    dice_scores[label] = dice
+
+    return dice_scores
+
+
+def merge_masks(data1: np.ndarray, data2: np.ndarray, label1: int = 1, label2: int = 2, new_label: int = 3):
+    # Assign labels to data1 and data2
+    labeled_data1 = np.where(data1 != 0, label1, 0)
+    labeled_data2 = np.where(data2 != 0, label2, 0)
+
+    merged_data = np.zeros_like(data1)  # Initialize merged data with zeros
+    overlapping_indices = np.logical_and(labeled_data1 != 0, labeled_data2 != 0)  # Find overlapping indices
+
+    # Copy non-overlapping regions from labeled_data1 and labeled_data2
+    merged_data[labeled_data1 != 0] = labeled_data1[labeled_data1 != 0]
+    merged_data[labeled_data2 != 0] = labeled_data2[labeled_data2 != 0]
+
+    # Assign new label to overlapping regions
+    merged_data[overlapping_indices] = new_label
+
+    return merged_data
+
+if __name__ == "__main__":
+    from data import *
+    from augmentation import *
+    import torchio as tio
+
+    input_file = r"E:\dataset\seg10\ss_input_reorient\irb82_0037.nii.gz"
+    ss_file = r"E:\dataset\seg10\ss_mask_new\irb82_0037.nii.gz"
+    cortex_file = r"E:\dataset\seg10\mask_robust_merged_reorient\irb82_0037.nii.gz"
+
+    img = nifti_to_numpy(load_nii(input_file))
+    ss_img = nifti_to_numpy(load_nii(ss_file))
+    cortex_img = nifti_to_numpy(reorient(load_nii(cortex_file)))
+
+    print(img.shape)
+    print(ss_img.shape)
+    print(cortex_img.shape)
+
+    merged = merge_masks(ss_img, cortex_img)
+
+    save_nii('test.nii', merged)
