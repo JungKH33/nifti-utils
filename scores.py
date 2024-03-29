@@ -1,7 +1,8 @@
 import numpy as np
 from scipy.spatial.distance import cdist
+import segmentation
+import utils
 
-import experimental
 
 
 def dice_score(data1: np.ndarray, data2: np.ndarray, labels= None) -> dict:
@@ -42,7 +43,7 @@ def dice_score(data1: np.ndarray, data2: np.ndarray, labels= None) -> dict:
 
     return dice_scores
 
-def assd_score(data1: np.ndarray, data2: np.ndarray, labels= [1]) -> dict:
+def assd_score(data1: np.ndarray, data2: np.ndarray, labels= [1], voxelspacing = None, connectivity = 1) -> dict:
     """
     Calculate the Average Symmetric Surface Distance (ASSD) score for multiple labels between two arrays.
 
@@ -78,6 +79,8 @@ def assd_score(data1: np.ndarray, data2: np.ndarray, labels= [1]) -> dict:
     if labels is None:
         labels = np.unique(np.concatenate((data1, data2)))
 
+    data1 = segmentation.get_borders(data1, connectivity = connectivity)
+    data2 = segmentation.get_borders(data2, connectivity = connectivity)
     assd_scores = {}
     for label in labels:
 
@@ -104,31 +107,25 @@ def assd_score(data1: np.ndarray, data2: np.ndarray, labels= [1]) -> dict:
         assd = (np.mean(min_distances_1_to_2) + np.mean(min_distances_2_to_1)) / 2.0
         assd_scores[label] = assd
 
-        ###
-        print()
-        print(np.argmax(distances_1_to_2, axis=1))
-        print(np.argmax(distances_2_to_1, axis=1))
-        ###
-
     return assd_scores
 
 
 if __name__ == '__main__':
     from data import *
     import os
+    import experimental
     #gt_path = r"E:\dataset\seg10\ss_mask_new\irb82_0034.nii.gz"
     #inf_path = r"C:\Users\Neurophet\Downloads\irb82_0034.nii.gz"
 
     gt_dir = r"E:\dataset\seg10\ss_mask_new"
-    inf_dir = r"E:\outputs\ss\inference_pp"
+    inf_dir = r"E:\dataset_final\ss\swi\inference_pp"
     mask_dir = r"E:\dataset\seg10\mask_robust_merged_reorient"
     dice_scores = []
     assd_scores = []
     overlaps = []
     filenames = []
     for filename in os.listdir(gt_dir):
-        if filename == 'irb82_0072.nii.gz' or filename == 'irb82_0042.nii.gz' or filename == 'irb82_0048.nii.gz':
-            continue
+
         gt_path = os.path.join(gt_dir, filename)
         inf_path = os.path.join(inf_dir, filename)
         mask_path = os.path.join(mask_dir, filename)
