@@ -71,7 +71,8 @@ def extract_nifti_info(input_img: Nifti1Image) -> dict:
 
     # Extract header information
     nii_info['header'] = input_img.header
-    nii_info['voxel_sizes'] = nii_info['header'].get_zooms()
+    nii_info['spacings'] = input_img.header.get_zooms()
+    nii_info['origin'] = input_img.header.get_best_affine()
 
     # Extract data type
     nii_info['data_type'] = input_img.get_data_dtype()

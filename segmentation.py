@@ -1,12 +1,14 @@
 import os
 from typing import Optional, Tuple
 import numpy as np
+
 from skimage.segmentation import find_boundaries
 from skimage.measure import label, regionprops
 from sklearn.cluster import DBSCAN, KMeans
 
 from scipy.ndimage import binary_dilation, measurements
 
+import data
 
 def find_labels(input_data: np.ndarray) -> list:
     """Find all unique labels present in a mask.
@@ -203,6 +205,50 @@ def get_regions(input_data: np.ndarray) -> dict:
         region_dict[region.label]['bbox'] = region.bbox
 
     return region_dict
+
+def check_data_integrity(input_path, gt_path) -> bool:
+    data_integrity = True
+
+    input_img = data.load_nii(input_path)
+    gt_img = data.load_nii(gt_path)
+
+    input_info = data.extract_nifti_info(input_img)
+    gt_info = data.extract_nifti_info(gt_img)
+
+    input_shape = input_info['shape']
+    input_orientation = input_info['orientation']
+    input_direction = input_info['direction']
+
+    gt_shape = gt_info['shape']
+    gt_orientation = gt_info['orientation']
+    gt_direction = gt_info['direction']
+
+    gt_values = gt_info['unique_values']
+
+    print()
+    print("Checking data integrity for")
+    print(f'input path: {input_path}  and gt path: {gt_path}')
+
+    print(f'input shape: {input_shape}       gt shape: {gt_shape}')
+    print(f'input orientation: {input_orientation}         gt orientation: {gt_orientation}')
+    print(f'input direction: {input_direction}         gt direction: {gt_direction}')
+    print(f'gt values: {gt_values}')
+
+    if input_shape != gt_shape:
+        print(f"Shapes of input ({input_shape}) and gt ({gt_shape}) do not match.")
+        data_integrity = False
+
+    if input_orientation != gt_orientation:
+        print(f"Orientation of input ({input_orientation}) and gt ({gt_orientation}) do not match.")
+        data_integrity = False
+
+    if input_direction.any() != gt_direction.any():
+        print(f"Direction of input ({input_direction}) and gt ({gt_direction}) do not match.")
+        data_integrity = False
+
+    return data_integrity
+
+
 
 if __name__ == "__main__":
     from data import *

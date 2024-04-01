@@ -2,6 +2,7 @@ import numpy as np
 from scipy.spatial.distance import cdist
 import segmentation
 import utils
+from typing import Dict
 
 
 
@@ -71,7 +72,7 @@ def assd_score(data1: np.ndarray, data2: np.ndarray, labels= [1], voxelspacing =
         ...                    [0, 0, 1, 0, 0],
         ...                    [0, 0, 0, 0, 0]])
         >>> assd_score(data1, data2)
-        {1: 0.35}
+        {1: 0.25}
     """
     if not np.array_equal(data1.shape, data2.shape):
         raise ValueError("The shapes of two arrays must be equal. data1 shape: {}, data2 shape: {}".format(data1.shape, data2.shape))
@@ -109,6 +110,43 @@ def assd_score(data1: np.ndarray, data2: np.ndarray, labels= [1], voxelspacing =
 
     return assd_scores
 
+def overlapping_areas(array1: np.ndarray, array2: np.ndarray) -> Dict[int, Dict[str, int]]:
+    """
+    Calculate the overlapping areas between regions with the same values in two numpy arrays.
+
+    Args:
+    array1 (np.ndarray): The first numpy array.
+    array2 (np.ndarray): The second numpy array.
+
+    Returns:
+    Dict[int, Dict[str, int]]: A dictionary where keys are the unique values present in both arrays,
+    and values are dictionaries containing the total area, area of each array, and overlapping area for each value.
+    """
+
+    if not np.array_equal(array1.shape, array2.shape):
+        raise ValueError("The shapes of two arrays must be equal. data1 shape: {}, data2 shape: {}".format(array1.shape,
+                                                                                                            array2.shape))
+
+    unique_values = np.unique(np.concatenate((array1, array2)))
+    overlapping_areas = {}
+
+    for value in unique_values:
+        # Create binary masks for each array where the value is present
+        mask1 = array1 == value
+        mask2 = array2 == value
+
+        # Find the intersection between the two masks
+        intersection = np.logical_and(mask1, mask2)
+        total = np.logical_or(mask1, mask2)
+
+        # Calculate the overlapping area
+        overlapping_areas[value] = {}
+        overlapping_areas[value]['total'] = np.sum(total)
+        overlapping_areas[value]['area1'] = np.sum(mask1)
+        overlapping_areas[value]['area2'] = np.sum(mask2)
+        overlapping_areas[value]['overlap'] = np.sum(intersection)
+
+    return overlapping_areas
 
 if __name__ == '__main__':
     from data import *
@@ -140,17 +178,19 @@ if __name__ == '__main__':
 
         dice = dice_score(gt_data, inf_data)
         assd = assd_score(gt_data, inf_data)
-        overlap = experimental.intersection_score(inf_data, mask_data)
+        overlap = overlapping_areas(inf_data, mask_data)
+
+        overlap = overlap[1]['overlap'] / overlap[1]['area1']
 
         filenames.append(filename)
         dice_scores.append(dice[1])
         assd_scores.append(assd[1])
-        overlaps.append(overlap[1])
+        overlaps.append(overlap)
 
         print(filename)
         print("DICE Scores : ", dice[1])
         print("ASSD Score : ", assd[1])
-        print("Overlapping region : ", overlap[1])
+        print("Overlapping region : ", overlap)
 
     average_dice_score = sum(dice_scores) / len(dice_scores)
     average_assd_score = sum(assd_scores) / len(assd_scores)
