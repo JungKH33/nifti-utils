@@ -38,18 +38,25 @@ def save_nii(save_path: str, input_data: np.ndarray, img_affine: np.ndarray = No
     nii_img = nib.Nifti1Image(input_data, img_affine, None)
     nib.save(nii_img, save_path)
 
-def nifti_to_numpy(input_img: Nifti1Image) -> np.ndarray:
+
+def nifti_to_numpy(input_img: nib.Nifti1Image, dtype: np.dtype = None) -> np.ndarray:
     """
-    Convert a NIfTI image object to a NumPy array.
+    Convert a NIfTI image object to a NumPy array with an optional specified data type.
 
     Parameters:
         input_img (nibabel.nifti1.Nifti1Image): The input NIfTI image object.
+        dtype (np.dtype, optional): The desired data type for the output array. Defaults to None.
 
     Returns:
-        np.ndarray: The image data array.
+        np.ndarray: The image data array with the specified data type if provided.
     """
     # Extract image data array
     data = input_img.get_fdata()
+
+    # If a dtype is specified, convert the data to that type
+    if dtype is not None:
+        data = data.astype(dtype)
+
     return data
 
 def extract_nifti_info(input_img: Nifti1Image) -> dict:
@@ -75,7 +82,7 @@ def extract_nifti_info(input_img: Nifti1Image) -> dict:
     nii_info['origin'] = input_img.header.get_best_affine()
 
     # Extract data type
-    nii_info['data_type'] = input_img.get_data_dtype()
+    nii_info['data type'] = input_img.get_data_dtype()
 
     # Extract shape
     nii_info['shape'] = input_img.shape
@@ -89,3 +96,90 @@ def extract_nifti_info(input_img: Nifti1Image) -> dict:
     nii_info['orientation'] = nib.aff2axcodes(affine)
 
     return nii_info
+
+def check_data_integrity(input_path, gt_path) -> bool:
+    data_integrity = True
+
+    input_img = load_nii(input_path)
+    gt_img = load_nii(gt_path)
+
+    input_info = extract_nifti_info(input_img)
+    gt_info = extract_nifti_info(gt_img)
+
+    input_shape = input_info['shape']
+    input_orientation = input_info['orientation']
+    input_direction = input_info['direction']
+
+    gt_shape = gt_info['shape']
+    gt_orientation = gt_info['orientation']
+    gt_direction = gt_info['direction']
+
+    gt_values = gt_info['unique_values']
+
+    print()
+    print("Checking data integrity for")
+    print(f'input path: {input_path}  and gt path: {gt_path}')
+
+    print(f'input shape: {input_shape}       gt shape: {gt_shape}')
+    print(f'input orientation: {input_orientation}         gt orientation: {gt_orientation}')
+    print(f'input direction: {input_direction}         gt direction: {gt_direction}')
+    print(f'gt values: {gt_values}')
+
+    if input_shape != gt_shape:
+        print(f"Shapes of input ({input_shape}) and gt ({gt_shape}) do not match.")
+        data_integrity = False
+
+    if input_orientation != gt_orientation:
+        print(f"Orientation of input ({input_orientation}) and gt ({gt_orientation}) do not match.")
+        data_integrity = False
+
+    if input_direction.any() != gt_direction.any():
+        print(f"Direction of input ({input_direction}) and gt ({gt_direction}) do not match.")
+        data_integrity = False
+
+    return data_integrity
+
+if __name__ == '__main__':
+    import os
+    from collections import defaultdict
+
+    data_dir = r"E:\dataset_final\ss\swi\input"
+    data_dir = r"C:\Users\Neurophet\Downloads\20240513_TechBroadcast\20240513_TechBroadcast\LABEL"
+
+    shape_counts = defaultdict(int)
+    orientation_counts = defaultdict(int)
+
+    for filename in os.listdir(data_dir):
+        print()
+        print(filename)
+        input_path = os.path.join(data_dir, filename)
+
+        input_img = load_nii(input_path)
+        input_info = extract_nifti_info(input_img)
+
+        input_shape = input_info['shape']
+        input_orientation = input_info['orientation']
+        input_direction = input_info['direction']
+        input_spacing = input_info['spacings']
+        input_values = input_info['unique_values']
+
+        print(f'input shape: {input_shape}')
+        print(f'input spacing: {input_spacing}')
+        print(f'input orientation: {input_orientation}')
+        print(f'input direction: {input_direction}')
+        print(f'unique values: {input_values}')
+
+        shape_str = str(input_shape)
+        orientation_str = str(input_orientation)
+
+        # Update counts
+        shape_counts[shape_str] += 1
+        orientation_counts[orientation_str] += 1
+
+    print("\nShape counts:")
+    for shape, count in shape_counts.items():
+        print(f"{shape}: {count}")
+
+    print("\nOrientation counts:")
+    for orientation, count in orientation_counts.items():
+        print(f"{orientation}: {count}")

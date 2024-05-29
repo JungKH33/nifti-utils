@@ -5,6 +5,46 @@ import utils
 from typing import Dict
 
 
+def iou(ground_truth: np.ndarray, predicted: np.ndarray) -> dict:
+    """
+    Calculate Intersection over Union (IoU) for each label present in the ground truth and predicted masks.
+
+    Args:
+        ground_truth (np.ndarray): Ground truth label mask.
+        predicted (np.ndarray): Predicted label mask.
+
+    Returns:
+        dict: A dictionary containing IoU for each label present in the masks.
+              Keys are the unique labels, and values are the corresponding IoU values.
+    """
+    # Ensure input arrays are integer type
+    ground_truth = np.asarray(ground_truth).astype(np.int32)
+    predicted = np.asarray(predicted).astype(np.int32)
+
+    # Get unique labels
+    labels = np.unique(np.concatenate((ground_truth, predicted)))
+
+    # Initialize dictionary to store IoU for each label
+    iou_dict = {}
+
+    # Calculate IoU for each label
+    for label in labels:
+        gt_label_mask = (ground_truth == label)
+        pred_label_mask = (predicted == label)
+
+        # Calculate intersection and union
+        intersection = np.logical_and(gt_label_mask, pred_label_mask)
+        union = np.logical_or(gt_label_mask, pred_label_mask)
+
+        # Compute IoU
+        if np.sum(union) == 0:
+            iou = 0.0  # Handle case when both masks are empty
+        else:
+            iou = np.sum(intersection) / np.sum(union)
+
+        iou_dict[label] = iou
+
+    return iou_dict
 
 def dice_score(data1: np.ndarray, data2: np.ndarray, labels= None) -> dict:
     """
@@ -110,9 +150,9 @@ def assd_score(data1: np.ndarray, data2: np.ndarray, labels= [1], voxelspacing =
 
     return assd_scores
 
-def overlapping_areas(array1: np.ndarray, array2: np.ndarray) -> Dict[int, Dict[str, int]]:
+def areas(array1: np.ndarray, array2: np.ndarray) -> Dict[int, Dict[str, int]]:
     """
-    Calculate the overlapping areas between regions with the same values in two numpy arrays.
+    Calculate the areas between regions with the same values in two numpy arrays.
 
     Args:
     array1 (np.ndarray): The first numpy array.
@@ -178,7 +218,7 @@ if __name__ == '__main__':
 
         dice = dice_score(gt_data, inf_data)
         assd = assd_score(gt_data, inf_data)
-        overlap = overlapping_areas(inf_data, mask_data)
+        overlap = areas(inf_data, mask_data)
 
         overlap = overlap[1]['overlap'] / overlap[1]['area1']
 

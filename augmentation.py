@@ -57,6 +57,22 @@ def resample_iso(input_img: Nifti1Image, target_iso: float | tuple[float, float,
     transformed_image = tio.Resize(target_iso)(input_img)
     return transformed_image
 
+
+def new_resize(input_img: Nifti1Image, target_shape: int | tuple[int, int, int]) -> Nifti1Image:
+    """
+    Resize the input image to the target shape.
+
+    Args:
+        input_img (Nifti1Image): Input image to be resized.
+        target_shape (tuple of int): Target shape of the output image in (x, y, z) format.
+
+    Returns:
+        Nifti1Image: Resized image with the target shape.
+    """
+#    new_shape = np.array([int(round(i / j * k)) for i, j, k in zip(old_spacing, new_spacing, old_shape)])
+#    return transformed_image
+    pass
+
 if __name__ == '__main__':
     from data import *
     import os

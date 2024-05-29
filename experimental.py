@@ -1,7 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-
 def draw_bounding_boxes(mask: np.ndarray, bounding_boxes: dict) -> np.ndarray:
     """
     Draw bounding boxes on the input image.
@@ -98,6 +97,34 @@ def merge_masks(data1: np.ndarray, data2: np.ndarray, label1: int = 1, label2: i
     merged_data[overlapping_indices] = new_label
 
     return merged_data
+
+def lesion_wise_sensitivity(ground_truth: np.ndarray, predicted: np.ndarray):
+    gt_labels = np.unique(ground_truth)
+    pred_labels = np.unique(predicted)
+    iou_dict = {}
+
+    for gt_label in gt_labels:
+        gt_label_mask = (ground_truth == gt_label)
+        max_iou = 0
+        for pred_label in pred_labels:
+            pred_label_mask = (predicted == pred_label)
+
+            # Calculate intersection and union
+            intersection = np.logical_and(gt_label_mask, pred_label_mask)
+            union = np.logical_or(gt_label_mask, pred_label_mask)
+
+            # Compute IoU
+            if np.sum(union) == 0:
+                iou = 0.0  # Handle case when both masks are empty
+            else:
+                iou = np.sum(intersection) / np.sum(union)
+                if iou > max_iou:
+                    max_iou = iou
+
+        iou_dict[gt_label] = max_iou
+    return iou_dict
+
+
 
 if __name__ == "__main__":
     from data import *

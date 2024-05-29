@@ -195,65 +195,136 @@ def get_bbox(input_data: np.ndarray) -> dict:
 
     return bounding_boxes
 
-def get_regions(input_data: np.ndarray) -> dict:
+def get_regions(input_data: np.ndarray, spacings: tuple = None) -> dict:
+    """
+    Calculate region properties from a labeled image array and return them in a dictionary.
+
+    Parameters:
+        input_data (np.ndarray): The input labeled image array where each region is identified by a unique label.
+        spacings (tuple, optional): A tuple of three float values representing the voxel spacing along each axis (z, y, x).
+                                    If provided, the volume with spacing will be calculated for each region.
+
+    Returns:
+        dict: A dictionary where the keys are the region labels and the values are dictionaries containing properties
+              of each region, such as volume, bounding box volume, bounding box coordinates, and volume with spacing (if spacings are provided).
+    """
     region_dict = {}
     regions = regionprops(input_data)
+
+    if spacings is not None:
+        voxel_volume = spacings[0] * spacings[1] * spacings[2]
+
     for region in regions:
-        region_dict[region.label] = {}
-        region_dict[region.label]['area'] = region.area
-        region_dict[region.label]['bbox_area'] = region.bbox_area
-        region_dict[region.label]['bbox'] = region.bbox
+        region_label = region.label
+        region_dict[region_label] = {
+            'volume': region.area,
+            'bbox_volume': region.bbox_area,
+            'bbox': region.bbox
+        }
+
+        if spacings is not None:
+            region_dict[region_label]['volume_spacing'] = region.bbox_area * voxel_volume
 
     return region_dict
 
-def check_data_integrity(input_path, gt_path) -> bool:
-    data_integrity = True
-
-    input_img = data.load_nii(input_path)
-    gt_img = data.load_nii(gt_path)
-
-    input_info = data.extract_nifti_info(input_img)
-    gt_info = data.extract_nifti_info(gt_img)
-
-    input_shape = input_info['shape']
-    input_orientation = input_info['orientation']
-    input_direction = input_info['direction']
-
-    gt_shape = gt_info['shape']
-    gt_orientation = gt_info['orientation']
-    gt_direction = gt_info['direction']
-
-    gt_values = gt_info['unique_values']
-
-    print()
-    print("Checking data integrity for")
-    print(f'input path: {input_path}  and gt path: {gt_path}')
-
-    print(f'input shape: {input_shape}       gt shape: {gt_shape}')
-    print(f'input orientation: {input_orientation}         gt orientation: {gt_orientation}')
-    print(f'input direction: {input_direction}         gt direction: {gt_direction}')
-    print(f'gt values: {gt_values}')
-
-    if input_shape != gt_shape:
-        print(f"Shapes of input ({input_shape}) and gt ({gt_shape}) do not match.")
-        data_integrity = False
-
-    if input_orientation != gt_orientation:
-        print(f"Orientation of input ({input_orientation}) and gt ({gt_orientation}) do not match.")
-        data_integrity = False
-
-    if input_direction.any() != gt_direction.any():
-        print(f"Direction of input ({input_direction}) and gt ({gt_direction}) do not match.")
-        data_integrity = False
-
-    return data_integrity
-
-
+def remove_small_clusters(image, threshold):
+    labeled_array, num_features = label(image, return_num= True)
+    for i in range(1, num_features + 1):
+        cluster = (labeled_array == i)
+        if np.sum(cluster) < threshold:
+            image[cluster] = 0
+    return image
 
 if __name__ == "__main__":
     from data import *
     import experimental
+    from sklearn.cluster import DBSCAN
 
+    dbscan = True
+
+    input_dir = r"E:\dataset_final\ss\swi\ground_truth"
+    data_dict = {}
+
+    for filename in os.listdir(input_dir):
+        print(filename)
+        if filename == 'irb83_0081.nii.gz':
+            break
+        input_path = os.path.join(input_dir, filename)
+        img = load_nii(input_path)
+        img_np = nifti_to_numpy(img, np.int32)
+
+        spacing = extract_nifti_info(img)['spacings']
+        volume = get_regions(img_np, spacing)[1]['volume_spacing']
+
+        clusters, num_clusters = label(img_np, return_num=True, connectivity= None)
+
+        if dbscan == True:
+            coords = np.column_stack(np.where(img_np != 0))
+            dbscan = DBSCAN(eps=1, min_samples=1)
+            clusters = dbscan.fit_predict(coords)
+            unique_labels = np.unique(clusters)
+            num_clusters = len(unique_labels) - (1 if -1 in unique_labels else 0)
+
+        data_dict[filename] = (volume, num_clusters)
+    ####
+    import matplotlib.pyplot as plt
+
+    data_dict = dict(sorted(data_dict.items(), key=lambda item: item[1][0]))
+
+    # Separate the filenames, volumes, and num_clusters
+    filenames = list(data_dict.keys())
+    volumes = [v[0] for v in data_dict.values()]
+    num_clusters = [v[1] for v in data_dict.values()]
+
+    # Define the positions for the bars
+    x = np.arange(len(filenames))
+    width = 0.35  # Width of the bars
+
+    # Create the plot
+    fig, ax1 = plt.subplots(figsize=(12, 6))
+
+    # Plot volumes on the primary y-axis
+    bars1 = ax1.bar(x - width / 2, volumes, width, label='Volume', color='blue', edgecolor='black')
+    ax1.set_xlabel('Filename')
+    ax1.set_ylabel('Volume', color='blue')
+    ax1.tick_params(axis='y', labelcolor='blue')
+
+    # Plot number of clusters on the secondary y-axis
+    ax2 = ax1.twinx()
+    bars2 = ax2.bar(x + width / 2, num_clusters, width, label='Number of Clusters', color='orange', edgecolor='black')
+    ax2.set_ylabel('Number of Clusters', color='orange')
+    ax2.tick_params(axis='y', labelcolor='orange')
+
+    # Add some text for title and axes ticks
+    plt.title('Volume and Number of Clusters by Filename')
+    ax1.set_xticks(x)
+    ax1.set_xticklabels(filenames, rotation=45, ha='right', fontsize=8)
+
+
+    # Attach a text label above each bar, displaying its height
+    def autolabel(ax, bars):
+        """Attach a text label above each bar in `bars`, displaying its height."""
+        for bar in bars:
+            height = bar.get_height()
+            ax.annotate('{}'.format(height),
+                        xy=(bar.get_x() + bar.get_width() / 2, height),
+                        xytext=(0, 3),  # 3 points vertical offset
+                        textcoords="offset points",
+                        ha='center', va='bottom', fontsize=8)
+
+
+    #autolabel(ax1, bars1)
+    #autolabel(ax2, bars2)
+
+    # Adjust the layout
+    fig.tight_layout()
+
+    # Show the plot
+    plt.show()
+
+
+    import sys
+    sys.exit()
     input_dir = r"E:\dataset\seg10\ss_input_reorient"
     mask_dir = r"E:\dataset\seg10\ss_mask_new"
     save_dir = r"C:\github\nii-utils\src"
